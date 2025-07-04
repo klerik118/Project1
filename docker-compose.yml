@@ -1,0 +1,158 @@
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  db:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 654321
+      POSTGRES_DB: finance_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d finance_db" ] 
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --appendonly yes --bind 0.0.0.0
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+#    volumes:
+#      - redisinsight_data:/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery_worker
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info #--concurrency=4 --prefetch-multiplier=2
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+#  celery_beat:
+#    build:
+#      context: .
+#      dockerfile: dockerfile
+#    container_name: celery_beat
+#    command: celery -A main beat --loglevel=info #--concurrency=4 --prefetch-multiplier=2
+#    volumes:
+#      - ./celery_data:/app
+#    depends_on:
+#      - redis
+#      - db
+#      - app
+#    environment:
+#      - CELERY_BROKER_URL=redis://redis:6379/0
+#      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+#    restart: unless_stopped
+#    networks:
+#      - app-network
+
+
+  flower:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: flower
+    command: celery -A app.core.celery_app.celery_app flower --port=5555
+    ports:
+      - '5555:5555'
+    depends_on:
+      - redis
+      - celery_worker
+    volumes:
+      - .:/app
+#    environment:
+#      - CELERY_BROKER_URL=redis://redis:6379/0
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  celery_data:
+
+networks:
+  app-network:
+
+
+
+#    environment:
+#      - REDIS_URL=redis://redis:6379/0  

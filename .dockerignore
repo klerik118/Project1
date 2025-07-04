@@ -1,0 +1,6 @@
+.flake8
+README.md
+.venv
+.coverage
+__pycache__
+*.pyc

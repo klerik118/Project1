@@ -1,0 +1,82 @@
+2025-06-30 13:41:29,242 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-06-30 13:41:29,274 - main - INFO - Ответ: 200 - null...
+2025-06-30 13:42:19,055 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-06-30 13:42:19,101 - main - ERROR - 500 Error: maximum recursion depth exceeded
+2025-07-01 03:29:16,314 - functional - DEBUG - 
+def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+    return 1
+
+2025-07-01 03:29:16,316 - functional - DEBUG - 
+def xmap(task, it):
+    return 1
+
+2025-07-01 03:29:16,317 - functional - DEBUG - 
+def backend_cleanup():
+    return 1
+
+2025-07-01 03:29:16,342 - functional - DEBUG - 
+def chain(*args, **kwargs):
+    return 1
+
+2025-07-01 03:29:16,343 - functional - DEBUG - 
+def xstarmap(task, it):
+    return 1
+
+2025-07-01 03:29:16,344 - functional - DEBUG - 
+def process_task_celery(user_id):
+    return 1
+
+2025-07-01 03:29:16,345 - functional - DEBUG - 
+def accumulate(self, *args, **kwargs):
+    return 1
+
+2025-07-01 03:29:16,346 - functional - DEBUG - 
+def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+    return 1
+
+2025-07-01 03:29:16,347 - functional - DEBUG - 
+def chunks(task, it, n):
+    return 1
+
+2025-07-01 03:29:16,348 - functional - DEBUG - 
+def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+    return 1
+
+2025-07-01 06:27:47,196 - main - INFO - Запрос: GET http://localhost:8000/
+2025-07-01 06:27:47,257 - main - INFO - Ответ: 404 - {"detail":"Not Found"}...
+2025-07-01 06:27:49,174 - main - INFO - Запрос: GET http://localhost:8000/favicon.ico
+2025-07-01 06:27:49,175 - main - INFO - Ответ: 404 - {"detail":"Not Found"}...
+2025-07-01 06:28:10,468 - main - INFO - Запрос: GET http://localhost:8000/docs
+2025-07-01 06:28:10,470 - main - INFO - Ответ: 200 - 
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <li...
+2025-07-01 06:28:11,137 - main - INFO - Запрос: GET http://localhost:8000/openapi.json
+2025-07-01 06:28:11,252 - main - INFO - Ответ: 200 - {"openapi":"3.1.0","info":{"title":"Financial mana...
+2025-07-01 06:47:06,881 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'john@email.ru', 'password': '123456'}
+2025-07-01 06:47:07,600 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:47:40,426 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'alice@email.ru', 'password': '654321'}
+2025-07-01 06:47:40,608 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:48:12,635 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'nike@mail.ru', 'password': '1234567'}
+2025-07-01 06:48:12,809 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:48:42,239 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-07-01 06:48:42,241 - main - INFO - Ответ: 200 - null...
+2025-07-01 06:53:11,180 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'nike@mail.ru', 'password': '1234567'}
+2025-07-01 06:53:11,510 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:53:39,027 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'alice@email.ru', 'password': '654321'}
+2025-07-01 06:53:39,277 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:54:04,971 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'john@email.ru', 'password': '123456'}
+2025-07-01 06:54:05,169 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 06:54:32,026 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-07-01 06:54:32,028 - main - INFO - Ответ: 200 - null...
+2025-07-01 07:19:07,026 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-07-01 07:19:07,036 - main - INFO - Ответ: 200 - null...
+2025-07-01 07:48:37,704 - main - INFO - Запрос: GET http://localhost:8000/websocket-list
+2025-07-01 07:48:37,709 - main - INFO - Ответ: 200 - [1,2,7]...
+2025-07-01 08:01:39,287 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'john@email.ru', 'password': '123456'}
+2025-07-01 08:01:39,738 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 08:02:13,814 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'alice@email.ru', 'password': '654321'}
+2025-07-01 08:02:13,989 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
+2025-07-01 08:02:45,512 - main - INFO - Запрос: POST http://localhost:8000/login {'email': 'nike@mail.ru', 'password': '1234567'}
+2025-07-01 08:02:45,680 - main - INFO - Ответ: 200 - {"eccess_token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXV...
