@@ -1,22 +1,16 @@
 from datetime import datetime, timezone, timedelta
-from decimal import Decimal
-from typing import Dict
 
 import jwt
-from fastapi import APIRouter, Depends, status, Query, WebSocketDisconnect
+from fastapi import APIRouter, Depends, status, Query
 from passlib.hash import pbkdf2_sha256   
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
-from fastapi.websockets import WebSocket
-import aiohttp
-import asyncio
-from sqlalchemy import select
 
 from app.schemas.user import UserCreate, UserLogin, UserOut, UserOutId
 from app.core.security import token_verification, get_id_current_user
 from app.repositories.user import UserRepository
 from app.core.config import auth, BaseAppException, redis_expire
-from app.core.database import get_async_session, get_redis, Transaction
+from app.core.database import get_async_session, get_redis
 
 
 user_router = APIRouter(tags=['Registration/Authorization'])

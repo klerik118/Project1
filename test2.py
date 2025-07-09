@@ -1,8 +1,31 @@
+from pydantic import BaseModel, ValidationError
+from typing import List
+import redis
+import asyncio
+import json
+
+s = {"recipient": [], "message": 'text'}  #, "group": True
+
+class WsChat(BaseModel):
+    recipient: List[int]
+    message: str
+    group: bool = False
 
 
-user_id = None
+from redis.asyncio import Redis
 
-if not isinstance(user_id, int):
-    print(user_id)
-else:
-    print(123)
+from app.core.database import get_redis
+
+
+red = redis.Redis('localhost', decode_responses=True)  #'redis://redis:6379'
+
+#red.rpush('hi', json.dumps({"sender": 1, "content": "by"}))
+
+msg = red.lrange('hi', 0, -1)
+
+print([json.loads(i) for i in msg])
+
+
+#r = redis.Redis(host='redis', port=6379)
+
+#r.rpush('hi', 'heloo')

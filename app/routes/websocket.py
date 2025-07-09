@@ -1,18 +1,21 @@
 from typing import Dict, List, Union
 from decimal import Decimal
-import re
 from json.decoder import JSONDecodeError
+import json
 
 from fastapi import APIRouter, Depends, Query, WebSocketDisconnect
-from fastapi.websockets import WebSocket
+from fastapi.websockets import WebSocket, WebSocketState
 import aiohttp
 import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import asyncio
+from pydantic import ValidationError
+from redis.asyncio import Redis
 
 from app.core.config import auth
-from app.core.database import get_async_session, Transaction
+from app.core.database import get_async_session, Transaction, User, get_redis
+from app.schemas.user import WsChat
 
 
 ws_router = APIRouter(tags=['Websocket'])
@@ -51,52 +54,83 @@ EUR = {balance * Decimal(result['conversion_rates']['EUR']):.2f}
         await asyncio.sleep(10)
     
 
-active_connections: List[Dict[str, Union[int, WebSocket]]] = [] #
+active_connections: List[Dict[str, Union[int, WebSocket]]] = [] 
 
 
 @ws_router.websocket('/ws-chat')
-async def ws_chat(websocket: WebSocket, token: str = Query(...)):
+async def ws_chat(
+    websocket: WebSocket, 
+    token: str = Query(...), 
+    session_db: AsyncSession = Depends(get_async_session),
+    redis_app: Redis = Depends(get_redis)
+    ):
     await websocket.accept()
     try:
         payload = jwt.decode(token, auth.public_key_path.read_text(), algorithms=auth.algorithm)
         if payload.get('type') != 'access':
+            await websocket.send_json({'Error': 'Not eccess token'})
             await websocket.close(reason='Not eccess token') 
             return
         user_id = int(payload.get('sub'))
-    except (jwt.PyJWTError, jwt.InvalidTokenError, jwt.DecodeError, jwt.InvalidSignatureError) as err:
-        await websocket.close(reason='Token error') 
-        return
-    active_connections.append({'id': user_id, 'ws': websocket})
-    while True:
-        try:
-            data = await websocket.receive_json()
-            message = data.get('message', None)
-            group = data.get('group', None)
-            if group == True and isinstance(message, str):
-                group_chat = [conn['ws'] for conn in active_connections if conn['id'] != user_id]
-                for chat in group_chat:
-                    await chat.send_json({"sender": user_id, "content": message})
+        active_connections.append({'id': user_id, 'ws': websocket})
+        list_users = (await session_db.execute(select(User.id))).scalars().all()
+        message_redis = await redis_app.lrange(f'User-{user_id}: message', 0, -1)
+        messages = [json.loads(i) for i in message_redis]
+        for msg in messages:
+            await websocket.send_json(msg)
+        await redis_app.delete(f'User-{user_id}: message')
+        while True:
+            data = (WsChat(**(await websocket.receive_json()))).model_dump()
+            if data.get('message') == '':
+                await websocket.send_json({'Error': 'Enter message'})
+                continue
+            elif data.get('group', False) == True:
+                for id in [i for i in list_users if i != user_id]:
+                    if id in [i['id'] for i in active_connections if i['id'] != user_id]:
+                        targ = next((e['ws'] for e in active_connections if e['id'] == id), None)
+                        if targ.client_state == WebSocketState.CONNECTED:
+                            await targ.send_json({"sender": user_id, "content": data['message']}) 
+                        else:
+                            msg = {"sender": user_id, "content": data['message']}
+                            await redis_app.rpush(f'User-{id}: message', json.dumps(msg))
+                    else:
+                        msg = {"sender": user_id, "content": data['message']}
+                        await redis_app.rpush(f'User-{id}: message', json.dumps(msg))
+            elif not data['recipient']: 
+                await websocket.send_json({'Error': 'Recipient not entered'})
+                continue
+            elif not [i for i in data['recipient'] if i in list_users]:
+                t = 'No such user'
+                await websocket.send_json({'Error': (t + 's') if len(data['recipient']) > 1 else t})
+                continue
             else:
-                target_user_id = data.get('recipient', None)       
-                if (not (target_user_id and message) or 
-                    not (isinstance(target_user_id, list) and isinstance(message, str))):
-                    await websocket.send_json({'Error': 'Invalid message format'})
-                    continue
-                #target_user = next((conn['ws'] for conn in active_connections if conn['id'] == target_user_id), None)
-                target_user = [conn['ws'] for conn in active_connections if conn['id'] in target_user_id]
-                if not target_user: 
-                    await websocket.send_json({'Error': 'No such user'})
-                    continue
-                for tar in target_user:
-                    await tar.send_json({"sender": user_id, "content": message})
-        except WebSocketDisconnect:
-            del active_connections[user_id]  
-            await websocket.send_json({'Error': 'No such user'}) 
-        except JSONDecodeError:
-            await websocket.send_json({'Error': 'Invalid json format'}) 
+                target_users = list(set(data['recipient']))
+                for target in target_users:
+                    if target not in list_users:
+                        await websocket.send_json({'Error': f'No user: {target}'})
+                    else:
+                        tar = next((i['ws'] for i in active_connections if i['id'] == target), None)
+                        if tar and tar.client_state == WebSocketState.CONNECTED:
+                            await tar.send_json({"sender": user_id, "content": data['message']})
+                        else:
+                            msg = {"sender": user_id, "content": data['message']}
+                            await redis_app.rpush(f'User-{target}: message', json.dumps(msg))
+    except (jwt.PyJWTError, jwt.InvalidTokenError, jwt.DecodeError, jwt.InvalidSignatureError):
+        await websocket.send_json({'Error': 'Token error'}) 
+        await websocket.close(reason='Token error') 
+        return          
+    except ValidationError:
+        await websocket.send_json({'Error': 'Invalid message format'}) 
+    except WebSocketDisconnect:
+        index = next((i for i, v in enumerate(active_connections) if v['id'] == user_id), None)
+        if index:
+            del active_connections[index]
+    except JSONDecodeError:
+        await websocket.send_json({'Error': 'Invalid json format'}) 
 
 
 @ws_router.get('/websocket-list')
-async def ws_connekt():
+async def ws_connekt(session_db: AsyncSession = Depends(get_async_session)):
     print(active_connections)
-    return [conn['id'] for conn in active_connections]
+    list_users = (await session_db.execute(select(User.id))).scalars().all()
+    return list_users

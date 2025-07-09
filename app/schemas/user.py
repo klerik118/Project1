@@ -1,5 +1,6 @@
 from enum import StrEnum
 from decimal import Decimal
+from typing import List
 
 from pydantic import BaseModel, Field, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,3 +92,9 @@ class TransactionDepends:
             ):
         self.session = session
         self.user_id = user_id
+
+
+class WsChat(BaseModel):
+    recipient: List[int] = []
+    message: str = ''
+    group: bool = False
